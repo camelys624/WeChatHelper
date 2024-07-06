@@ -1,14 +1,18 @@
-package com.huangyuanlove.auxiliary.service
+package com.huangyuanlove.wehelper.service
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.EditText
-import com.huangyuanlove.auxiliary.EasyTimer
-import com.huangyuanlove.auxiliary.ShareInfo
-
+import android.widget.Toast
+import com.huangyuanlove.wehelper.ShareInfo
+import com.huangyuanlove.wehelper.constant.WX_PACKAGE_NAME
+import com.huangyuanlove.wehelper.utils.EasyTimer
 import java.util.*
+import kotlin.math.log
 
 private const val LAUNCHER_UI = "com.tencent.mm.ui.LauncherUI"
 private const val TIMELINE_UI = "com.tencent.mm.plugin.sns.ui.SnsTimeLineUI"
@@ -51,6 +55,28 @@ class WXShareMultiImageService : AccessibilityService() {
 
     // 当窗口发生的事件是我们配置监听的事件时,会回调此方法.会被调用多次
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        //遍历当前页面所有节点，寻找合适节点进行点击
+
+//        if(event.packageName == WX_PACKAGE_NAME && (event.eventType ==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || event.eventType ==AccessibilityEvent.TYPE_VIEW_CLICKED) ){
+//            getRootNodeInfo()?.visitAll();
+//        }
+        if (event.packageName == WX_PACKAGE_NAME) {
+            Log.e("huangyuan", "eventType--> ${event.eventType}")
+        }
+        if (event.packageName == WX_PACKAGE_NAME && event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            Log.e("huangyuan", "开始寻找")
+            val nodeInfo = getRootNodeInfo()?.getNodeByContentDescription("搜索")
+            if (nodeInfo != null) {
+                Log.e("huangyuan", "找到搜索按钮")
+                nodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            } else {
+                Log.e("huangyuan", "没有找到搜索按钮")
+            }
+
+        }
+
+
+
         if (!ShareInfo.options.isAutoFill) {
             return
         }
@@ -65,6 +91,7 @@ class WXShareMultiImageService : AccessibilityService() {
                     }
                 }
             }
+
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 when (step) {
                     Step.Discover -> goIntoTimeline()
@@ -73,6 +100,7 @@ class WXShareMultiImageService : AccessibilityService() {
                     }
                 }
             }
+
             else -> {
             }
         }
@@ -225,6 +253,50 @@ class WXShareMultiImageService : AccessibilityService() {
             index++
         }
         return node
+    }
+
+
+    private fun AccessibilityNodeInfo.getNodeByContentDescription(contentDescription: String): AccessibilityNodeInfo? {
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(this)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+            Log.e(
+                "huangyuan",
+                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+            )
+            info.contentDescription?.let {
+                if(it.contains(contentDescription)){
+                    Log.e("huangyuan", "找到搜索按钮")
+                    return info
+                }
+            }
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
+        return null
+    }
+
+    private fun AccessibilityNodeInfo.visitAll() {
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(this)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+//            Log.e("huangyuan","nodeinfo--> ${ info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}")
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
     }
 
     /**

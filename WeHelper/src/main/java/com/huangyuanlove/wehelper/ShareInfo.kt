@@ -1,6 +1,4 @@
-package com.huangyuanlove.auxiliary
-
-
+package com.huangyuanlove.wehelper
 import android.text.TextUtils
 
 /**

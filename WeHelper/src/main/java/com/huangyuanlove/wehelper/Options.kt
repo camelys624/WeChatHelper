@@ -1,5 +1,4 @@
-package com.huangyuanlove.auxiliary
-
+package com.huangyuanlove.wehelper
 
 /**
  * Created by StoneHui on 2019-11-28.

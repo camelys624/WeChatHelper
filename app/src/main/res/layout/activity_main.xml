@@ -14,5 +14,11 @@
         android:layout_height="wrap_content"
         android:text="打开微信"
        />
+    <Button
+        android:id="@+id/share_to_wechat_session"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="分享到好友"
+        />
 
 </LinearLayout>

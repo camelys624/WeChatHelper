@@ -1,7 +1,5 @@
-package com.huangyuanlove.auxiliary
-
-import java.util.Timer
-import java.util.TimerTask
+package com.huangyuanlove.wehelper.utils
+import java.util.*
 
 /**
  * 简易定时器

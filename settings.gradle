@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "auxiliary"
 include ':app'
+
+include ':WeHelper'

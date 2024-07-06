@@ -2,6 +2,7 @@ package com.huangyuanlove.auxiliary
 
 import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -16,6 +17,7 @@ import androidx.core.view.LayoutInflaterCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
+import com.huangyuanlove.wehelper.WXShareMultiImageHelper
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,6 +33,9 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }
+        binding.shareToWechatSession.setOnClickListener {
+            WXShareMultiImageHelper.shareToSession(this, arrayOf<Bitmap>())
+        }
 
     }
 
@@ -39,41 +44,20 @@ class MainActivity : AppCompatActivity() {
         if(!isAccessibilitySettingOn()){
           AlertDialog.Builder(this)
               .setTitle("开启辅助功能")
-              .setNegativeButton("去开启",object:DialogInterface.OnClickListener{
-                  override fun onClick(dialog: DialogInterface?, which: Int) {
-                     startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                  }
-
-              })
+              .setNegativeButton("去开启"
+              ) { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
               .show()
         }
 
     }
 
-    fun isAccessibilitySettingOn():Boolean{
-
-        var accessibilityEnabled = 0
-       try {
-           accessibilityEnabled =  Settings.Secure.getInt(contentResolver,Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-       }catch (e:Exception){
-           e.printStackTrace()
-       }
-
-        if(accessibilityEnabled == 1){
-            try {
-                val services = Settings.Secure.getString(contentResolver,Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-                services?.let {
-                    return services.lowercase().contains(packageName.lowercase())
-                }
-            }catch (e:Exception ){
-                e.printStackTrace()
-            }
-
-        }
+    private fun isAccessibilitySettingOn():Boolean{
+       return WXShareMultiImageHelper.isServiceEnabled(this)
 
 
 
-        return false
+
+
     }
 
 }
