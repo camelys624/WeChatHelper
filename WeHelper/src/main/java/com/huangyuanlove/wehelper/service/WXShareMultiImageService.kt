@@ -1,35 +1,34 @@
 package com.huangyuanlove.wehelper.service
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.GestureDescription
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.text.TextUtils
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.EditText
-import android.widget.Toast
 import com.huangyuanlove.wehelper.ShareInfo
 import com.huangyuanlove.wehelper.constant.WX_PACKAGE_NAME
 import com.huangyuanlove.wehelper.utils.EasyTimer
 import java.util.*
-import kotlin.math.log
 
-private const val LAUNCHER_UI = "com.tencent.mm.ui.LauncherUI"
-private const val TIMELINE_UI = "com.tencent.mm.plugin.sns.ui.SnsTimeLineUI"
-private const val UPLOAD_UI = "com.tencent.mm.plugin.sns.ui.SnsUploadUI"
-private const val ALBUM_PREVIEW_UI = "com.tencent.mm.plugin.gallery.ui.AlbumPreviewUI"
+private const val Step_Start = 1
+private const val Step_ClickSearchButton = Step_Start+1
+private const val Step_FindSearchInputText = Step_ClickSearchButton+1
+private const val Step_FindContact = Step_FindSearchInputText+1
+private const val Step_ClickContact = Step_FindContact+1
+private const val Step_FindVideoMenu = Step_ClickContact+1
+private const val Step_ClickVideoMenu = Step_FindVideoMenu+1
+private const val Step_FindVideoButton = Step_ClickVideoMenu+1
+private const val Step_Select_Video_Call = Step_FindVideoButton+1
+private const val Step_ClickVideoButton = Step_Select_Video_Call+1
 
-private val DISCOVER_TEXT_LIST = arrayOf("发现", "Discover")
-private val TIMELINE_TEXT_LIST = arrayOf("朋友圈", "Moments")
-private val SHARE_TEXT_LIST = arrayOf("拍照分享", "")
-private val SELECT_FROM_ALBUM_TEXT_LIST = arrayOf(
-    "从相册选择", "Select Photos or Videos from Album", "Choose from Album"
-)
-private val POST_TEXT_LIST = arrayOf("发表", "Post")
 
-enum class Step {
-    Idle, Launcher, Discover, Timeline, PrepareAlbum, AlbumPreview, Upload
-}
+
+private const val USER_NAME = "穷的清心寡欲"
 
 /**
  * Created by StoneHui on 2018/10/22.
@@ -38,225 +37,232 @@ enum class Step {
  */
 class WXShareMultiImageService : AccessibilityService() {
 
-    // GridView 或者 RecyclerView
-    private val gvOrRcvRegex = "(?:\\.GridView|\\.RecyclerView)$".toRegex()
 
-    // EditText
-    private val etRegex = EditText::class.java.name.toRegex()
-
-    // View 或者 CheckBox
-    private val vOrCbRegex = "(?:\\.View|\\.CheckBox)$".toRegex()
-
-    // Button
-    private val btnRegex = "(?:\\.AppCompatButton|\\.Button)$".toRegex()
 
     // 当前步骤
-    private var step = Step.Launcher
+    private var currentStep = Step_Start
+
+    private val handler :Handler = object: Handler(Looper.getMainLooper()){
+        override fun handleMessage(msg: Message) {
+            Log.e("huangyuan","handler 开始处理 ${msg.what}")
+                when(msg.what){
+                    Step_Start->{findSearchButtonAndClick()}
+                    Step_FindSearchInputText->{findSearchEditTextAndInput()}
+                    Step_FindVideoMenu->{findVideoMenuAndClick()}
+                    Step_FindVideoButton->{findVideoFunctionAndClick()}
+                    else->{
+                        Log.e("huangyuan","${msg.what} 正在开发")
+                    }
+                }
+        }
+    }
+
+    private fun findVideoFunctionAndClick(){
+        //先找到更多按钮，点击之后展开更多输入类型，点击视频通话，在底部弹窗中点击 视频通话
+
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(rootInActiveWindow)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+//            Log.e(
+//                "huangyuan",
+//                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+//            )
+            //更多功能按钮
+            if ( TextUtils.equals(info.text , "视频通话")) {
+                Log.e("huangyuan", "找到了 视频通话按钮 ,类型是--> ${info.className}")
+                Log.e("huangyuan", "找到了,开始点击")
+//                info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+//                currentStep = Step_Select_Video_Call
+                while (info!=null){
+                    Log.e("huangyuan","视频通话按钮--> ${info.className} , ${info.text} , ${info.contentDescription} , ${info.getBoundsInScreen(null)}")
+                    if(!info.className.equals("android.widget.GridView")){
+                        info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+
+                    }else{
+                        return
+                    }
+                    info = info.parent
+                }
+                return
+            }
+
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
+    }
+
+
+    private fun findVideoMenuAndClick(){
+        //先找到更多按钮，点击之后展开更多输入类型，点击视频通话，在底部弹窗中点击 视频通话
+
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(rootInActiveWindow)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+                Log.e(
+                    "huangyuan",
+                    "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+                )
+            //更多功能按钮
+            if ( TextUtils.equals(info.contentDescription , "更多功能按钮，已折叠") && TextUtils.equals("android.widget.ImageButton",info.className)) {
+                Log.e("huangyuan", "找到了 +按钮 ,类型是--> ${info.className}")
+                currentStep = Step_ClickVideoMenu
+                info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                currentStep = Step_FindVideoButton
+                return
+            }
+
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
+
+    }
+
+
+    private fun findSearchButtonAndClick(){
+        Log.e("huangyuan", "开始寻找搜索按钮")
+        val nodeInfo = getRootNodeInfo()?.getNodeByContentDescription("搜索")
+        if (nodeInfo != null) {
+            Log.e("huangyuan", "找到搜索按钮，开始点击")
+            currentStep = Step_ClickSearchButton
+            nodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            currentStep = Step_FindSearchInputText
+
+        } else {
+            Log.e("huangyuan", "没有找到搜索按钮")
+        }
+    }
+    private fun findSearchEditTextAndInput(){
+        Log.e("huangyuan", "开始寻找搜索框，并进行输入")
+        val nodeInfo = getRootNodeInfo()?.getNodeByCustomText("搜索")
+        if (nodeInfo == null) {
+            Log.e("huangyuan", "没有找到 搜索 相关控件")
+        } else {
+            if (nodeInfo.className.contains("EditText")) {
+                Log.e("huangyuan", "开始输入")
+                nodeInfo.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                val arguments = Bundle()
+                arguments.putCharSequence(
+                    AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                    USER_NAME
+                )
+                nodeInfo.performAction(
+                    AccessibilityNodeInfo.ACTION_SET_TEXT,
+                    arguments
+                )
+                currentStep = Step_FindContact
+                findContactAndClick()
+
+            }else{
+                Log.e("huangyuan", "没有找到 搜索编辑框 相关控件")
+            }
+
+        }
+    }
+
+
 
     // 当窗口发生的事件是我们配置监听的事件时,会回调此方法.会被调用多次
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        //遍历当前页面所有节点，寻找合适节点进行点击
 
-//        if(event.packageName == WX_PACKAGE_NAME && (event.eventType ==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || event.eventType ==AccessibilityEvent.TYPE_VIEW_CLICKED) ){
-//            getRootNodeInfo()?.visitAll();
-//        }
-        if (event.packageName == WX_PACKAGE_NAME) {
-            Log.e("huangyuan", "eventType--> ${event.eventType}")
-        }
-        if (event.packageName == WX_PACKAGE_NAME && event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            Log.e("huangyuan", "开始寻找")
-            val nodeInfo = getRootNodeInfo()?.getNodeByContentDescription("搜索")
-            if (nodeInfo != null) {
-                Log.e("huangyuan", "找到搜索按钮")
-                nodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            } else {
-                Log.e("huangyuan", "没有找到搜索按钮")
+        if (event.packageName == WX_PACKAGE_NAME && (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ) ) {
+            Log.e("huangyuan", "微信活动 当前步骤--> $currentStep")
+            when (currentStep) {
+                Step_Start -> {
+                    handler.removeMessages(Step_Start)
+                    handler.sendEmptyMessageDelayed(Step_Start,500)
+                }
+
+                Step_FindSearchInputText -> {
+                    handler.removeMessages(Step_FindSearchInputText)
+                    handler.sendEmptyMessageDelayed(Step_FindSearchInputText,500)
+
+                }
+                Step_FindVideoMenu->{
+                    handler.removeMessages(Step_FindVideoMenu)
+                    handler.sendEmptyMessageDelayed(Step_FindVideoMenu,500)
+                }
+                Step_FindVideoButton->{
+                    handler.removeMessages(Step_FindVideoButton)
+                    handler.sendEmptyMessageDelayed(Step_FindVideoButton,500)
+                }
+
+                else -> {
+                    Log.e("huangyuan","当前步骤未进行 $currentStep")
+                }
             }
-
         }
+    }
 
 
+    private  fun findContactAndClick(){
+        Log.e("huangyuan","开始查找联系人")
+        EasyTimer.schedule(800){
 
-        if (!ShareInfo.options.isAutoFill) {
-            return
-        }
-        when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                when (event.className.toString()) {
-                    LAUNCHER_UI -> processLauncherUI()
-                    TIMELINE_UI -> prepareGoIntoAlbum()
-                    ALBUM_PREVIEW_UI -> selectImage()
-                    UPLOAD_UI -> processingUploadUI()
-                    else -> {
+            val queue = LinkedList<AccessibilityNodeInfo>()
+            queue.offer(rootInActiveWindow)
+            var info: AccessibilityNodeInfo?
+            while (!queue.isEmpty()) {
+                info = queue.poll()
+                if (info == null) {
+                    continue
+                }
+//                Log.e(
+//                    "huangyuan",
+//                    "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+//                )
+                if ( TextUtils.equals(info.text , USER_NAME) && TextUtils.equals("android.widget.TextView",info.className)) {
+                    Log.e("huangyuan", "找到了 $USER_NAME ,类型是--> ${info.className}")
+                    Log.e("huangyuan","找到了,开始点击")
+                    currentStep = Step_ClickContact
+//
+//
+                    while (info!=null){
+                        Log.e("huangyuan","parent info ${info.text} , ${info.className} , ${info.contentDescription}")
+                        if(info.className.contains("RelativeLayout")){
+                            info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                            currentStep = Step_FindVideoMenu
+                            info = null
+                        }else{
+                            info = info.parent
+                        }
+//
+
                     }
+
+
+                    return@schedule
+
+                }
+
+
+                for (i in 0 until info.childCount) {
+                    queue.offer(info.getChild(i))
                 }
             }
 
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
-                when (step) {
-                    Step.Discover -> goIntoTimeline()
-                    Step.PrepareAlbum -> goIntoAlbum()
-                    else -> {
-                    }
-                }
-            }
 
-            else -> {
-            }
-        }
 
-    }
-
-    // 处理启动页
-    private fun processLauncherUI() {
-        if (ShareInfo.waitingImageCount <= 0) {
-            step = Step.Idle
-        } else {
-            step = Step.Launcher
-            goIntoDiscover()
         }
     }
 
-    // 进入发现页
-    private fun goIntoDiscover() {
-        if (step !== Step.Launcher) {
-            return
-        }
-        EasyTimer.schedule(200) {
-            step = Step.Discover
-            getRootNodeInfo()?.clickNodeByText(DISCOVER_TEXT_LIST, 2)
-        }
-    }
-
-    // 进入朋友圈
-    private fun goIntoTimeline() {
-        if (step !== Step.Discover) {
-            return
-        }
-        EasyTimer.schedule(200) {
-            step = Step.Timeline
-            getRootNodeInfo()?.clickNodeByText(TIMELINE_TEXT_LIST, 8)
-        }
-    }
-
-    // 准备进入相册
-    private fun prepareGoIntoAlbum() {
-        if (step !== Step.Timeline) {
-            return
-        }
-        EasyTimer.schedule(200) {
-            step = Step.PrepareAlbum
-            getRootNodeInfo()?.clickNodeByText(SHARE_TEXT_LIST)
-        }
-    }
-
-    // 进入相册
-    private fun goIntoAlbum() {
-        if (step !== Step.PrepareAlbum) {
-            return
-        }
-        EasyTimer.schedule(200) {
-            step = Step.AlbumPreview
-            getRootNodeInfo()?.clickNodeByText(SELECT_FROM_ALBUM_TEXT_LIST, 3)
-        }
-    }
-
-    // 选择图片
-    private fun selectImage() {
-        if (step !== Step.AlbumPreview) {
-            return
-        }
-        EasyTimer.schedule(200) {
-            val rootNodeInfo = getRootNodeInfo() ?: return@schedule
-            val targetView = rootNodeInfo.getChild(gvOrRcvRegex) ?: return@schedule
-            // 选图
-            val maxIndex = ShareInfo.selectedImageCount + ShareInfo.waitingImageCount - 1
-            (ShareInfo.selectedImageCount..maxIndex).forEach {
-                targetView.getChild(it).clickNodeByClassName(vOrCbRegex)
-            }
-            // 选图结束
-            selectImageFinished()
-        }
-    }
-
-    // 选择图片完成
-    private fun selectImageFinished() {
-        ShareInfo.setImageCount(0, 0)
-        EasyTimer.schedule(200) {
-            step = Step.Upload
-            getRootNodeInfo()?.clickNodeByClassName(btnRegex)
-        }
-    }
-
-    // 处理图文分享界面
-    private fun processingUploadUI() {
-        if (step !== Step.Upload) {
-            return
-        }
-        val rootNodeInfo = getRootNodeInfo()
-        if (rootNodeInfo === null) {
-            step = Step.Idle
-            return
-        }
-        // 粘贴待分享文案
-        if (ShareInfo.options.text.isNotEmpty()) {
-            ShareInfo.options.text = ""
-            rootNodeInfo.getChild(etRegex)?.run {
-                performAction(AccessibilityNodeInfo.ACTION_FOCUS)
-                performAction(AccessibilityNodeInfo.ACTION_PASTE)
-            }
-        }
-        // 发表
-        if (ShareInfo.options.isAutoPost) {
-            ShareInfo.options.isAutoPost = false
-            EasyTimer.schedule(200) {
-                rootNodeInfo.clickNodeByText(POST_TEXT_LIST)
-            }
-        }
-        step = Step.Idle
-    }
-
-    /**
-     * 点击指定文案的节点
-     * @param textList 选文案列表，按顺序查找，找到即停止查找
-     * @param parentCount 0 表示点击查找到的节点，大于 0 表示点击向上查找指定层级的父节点
-     */
-    private fun AccessibilityNodeInfo.clickNodeByText(
-        textList: Array<String>,
-        parentCount: Int = 0
-    ) {
-        var node = getNodeByText(textList)
-        repeat(parentCount) {
-            node = node?.parent
-        }
-        node?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-    }
-
-    /**
-     * 点击指定类名的节点
-     * @param className 类名正则
-     */
-    private fun AccessibilityNodeInfo.clickNodeByClassName(className: Regex) {
-        this.getChild(className)?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-    }
-
-    /**
-     * 查找指定文案的节点
-     * @param textList 备选文案列表，按顺序查找，找到即停止查找
-     * @return 对应的节点或者 null
-     */
-    private fun AccessibilityNodeInfo.getNodeByText(textList: Array<String>): AccessibilityNodeInfo? {
-        var node: AccessibilityNodeInfo? = null
-        var index = 0
-        while (index < textList.size && node === null) {
-            node = this.findAccessibilityNodeInfosByText(textList[index]).getOrNull(0)
-            index++
-        }
-        return node
-    }
 
 
-    private fun AccessibilityNodeInfo.getNodeByContentDescription(contentDescription: String): AccessibilityNodeInfo? {
+
+    private fun AccessibilityNodeInfo.getNodeByCustomText(text: String): AccessibilityNodeInfo? {
         val queue = LinkedList<AccessibilityNodeInfo>()
         queue.offer(this)
         var info: AccessibilityNodeInfo?
@@ -265,73 +271,54 @@ class WXShareMultiImageService : AccessibilityService() {
             if (info == null) {
                 continue
             }
-            Log.e(
-                "huangyuan",
-                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
-            )
-            info.contentDescription?.let {
-                if(it.contains(contentDescription)){
-                    Log.e("huangyuan", "找到搜索按钮")
-                    return info
-                }
-            }
-
-            for (i in 0 until info.childCount) {
-                queue.offer(info.getChild(i))
-            }
-        }
-        return null
-    }
-
-    private fun AccessibilityNodeInfo.visitAll() {
-        val queue = LinkedList<AccessibilityNodeInfo>()
-        queue.offer(this)
-        var info: AccessibilityNodeInfo?
-        while (!queue.isEmpty()) {
-            info = queue.poll()
-            if (info == null) {
-                continue
-            }
-//            Log.e("huangyuan","nodeinfo--> ${ info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}")
-            for (i in 0 until info.childCount) {
-                queue.offer(info.getChild(i))
-            }
-        }
-    }
-
-    /**
-     * 查找指定类名的节点
-     * @param className 类名正则
-     * @return 对应的节点或者 null
-     */
-    private fun AccessibilityNodeInfo.getChild(className: Regex): AccessibilityNodeInfo? {
-        val queue = LinkedList<AccessibilityNodeInfo>()
-        queue.offer(this)
-        var info: AccessibilityNodeInfo?
-        while (!queue.isEmpty()) {
-            info = queue.poll()
-            if (info == null) {
-                continue
-            }
-            if (info.className.toString().contains(className)) {
+//            Log.e(
+//                "huangyuan",
+//                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+//            )
+            if ( TextUtils.equals(info.text ,text)) {
+                Log.e("huangyuan", "找到了 $text ,类型是--> ${info.className}")
                 return info
             }
+
             for (i in 0 until info.childCount) {
                 queue.offer(info.getChild(i))
             }
         }
         return null
     }
+
+
+    private fun AccessibilityNodeInfo.getNodeByContentDescription(desc: String): AccessibilityNodeInfo? {
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(this)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+//            Log.e(
+//                "huangyuan",
+//                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
+//            )
+            if (info.contentDescription != null && info.contentDescription == desc) {
+                Log.e("huangyuan", "找到了 $desc ,类型是--> ${info.className}")
+                return info
+            }
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
+        return null
+    }
+
+
 
     // 获取 APPLICATION 的 Window 根节点
     private fun getRootNodeInfo(): AccessibilityNodeInfo? {
-        var rootNodeInfo: AccessibilityNodeInfo? = null
-        for (window in windows) {
-            if (window.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
-                rootNodeInfo = window.root
-            }
-        }
-        return rootNodeInfo ?: rootInActiveWindow
+
+        return rootInActiveWindow
     }
 
     override fun onInterrupt() {

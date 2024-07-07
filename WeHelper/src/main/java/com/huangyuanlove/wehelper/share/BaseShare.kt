@@ -24,14 +24,14 @@ open class BaseShare {
      * 检查是否可以分享。
      */
     protected fun checkShareEnable(context: Context): Boolean {
-        if (!hasStoragePermission(context)) {
-            Toast.makeText(context, "没有存储权限，无法分享", Toast.LENGTH_SHORT).show()
-            return false
-        }
-        if (!WXDetectUtil.isWXInstalled(context)) {
-            Toast.makeText(context, "未安装微信", Toast.LENGTH_SHORT).show()
-            return false
-        }
+//        if (!hasStoragePermission(context)) {
+//            Toast.makeText(context, "没有存储权限，无法分享", Toast.LENGTH_SHORT).show()
+//            return false
+//        }
+//        if (!WXDetectUtil.isWXInstalled(context)) {
+//            Toast.makeText(context, "未安装微信", Toast.LENGTH_SHORT).show()
+//            return false
+//        }
         return true
     }
 
