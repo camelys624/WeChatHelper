@@ -2,6 +2,7 @@ package com.huangyuanlove.auxiliary
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.widget.Toast
@@ -10,16 +11,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.bean.Contact
+import com.huangyuanlove.auxiliary.bean.MyObjectBox
 import com.huangyuanlove.auxiliary.databinding.ActivityAddContactBinding
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
+import com.huangyuanlove.auxiliary.utils.ObjectBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 class AddContactActivity : AppCompatActivity() {
 
@@ -51,11 +57,17 @@ class AddContactActivity : AppCompatActivity() {
                         startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
                     }
 
-                    override fun onDenied(permissions: MutableList<String>, doNotAskAgain: Boolean) {
+                    override fun onDenied(
+                        permissions: MutableList<String>,
+                        doNotAskAgain: Boolean
+                    ) {
                         if (doNotAskAgain) {
                             Toaster.show("被永久拒绝授权，请手动授予权限")
                             // 如果是被永久拒绝就跳转到应用权限系统设置页面
-                            XXPermissions.startPermissionActivity(this@AddContactActivity, permissions)
+                            XXPermissions.startPermissionActivity(
+                                this@AddContactActivity,
+                                permissions
+                            )
                         } else {
                             Toaster.show("获取权限失败")
                         }
@@ -88,24 +100,50 @@ class AddContactActivity : AppCompatActivity() {
         contact.phone = phone
         contact.avatar = avatar
         lifecycleScope.launch {
-            withContext(Dispatchers.IO){
-
+            withContext(Dispatchers.IO) {
+                ObjectBox.sotre.boxFor(Contact::class.java).put(contact)
+                setResult(Activity.RESULT_OK)
+                finish()
             }
-//            setResult(Activity.RESULT_OK)
-//            finish()
+
         }
 
 
-
-
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
             val imageUri = data.data
-            avatar = imageUri.toString()
-            binding.avatar.setImageURI(imageUri) // imageView是您用来显示图片的ImageView组件
+            imageUri?.let {
+                avatar = copyToInternal(it)
+                if (avatar.isEmpty()) {
+                    Toaster.show("图片使用失败，请重新选择")
+                } else {
+                    Glide.with(this).load(avatar).into(binding.avatar)
+                }
+
+            }
+
         }
+    }
+
+    private fun copyToInternal(uri: Uri): String {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val file = File(cacheDir, System.currentTimeMillis().toString())
+            val outputStream = FileOutputStream(file)
+            inputStream?.copyTo(outputStream)
+            inputStream?.close()
+            outputStream.flush()
+            outputStream.close()
+
+            return file.absolutePath
+        } catch (e: Exception) {
+            e.toString()
+        }
+        return ""
+
     }
 
 }
