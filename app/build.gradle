@@ -14,8 +14,11 @@ android {
         targetSdk 32
         versionCode 1
         versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        kapt {
+            arguments {
+                arg("room.schemaLocation", "$projectDir/schemas")
+            }
+        }
     }
 
     buildTypes {
@@ -48,7 +51,8 @@ dependencies {
     implementation libs.androidx.room.runtime
     kapt "androidx.room:room-compiler:$room_version"
     implementation(libs.coil)
-    implementation 'com.github.getActivity:Toaster:12.6'
+    implementation libs.toaster
+    implementation libs.xxpermissions
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

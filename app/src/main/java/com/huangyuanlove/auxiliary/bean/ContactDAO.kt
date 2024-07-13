@@ -9,11 +9,11 @@ import androidx.room.Query
 interface ContactDAO {
 
     @Query("SELECT * FROM contact")
-    suspend fun getAll():List<Contact>
+     fun getAll():List<Contact>
 
     @Insert
-    suspend fun insertContact(contact :Contact)
+     fun insertContact(contact :Contact)
     @Delete
-    suspend fun deleteContact(contact:Contact)
+     fun deleteContact(contact:Contact)
 
 }

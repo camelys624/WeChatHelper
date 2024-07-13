@@ -1,5 +1,6 @@
 package com.huangyuanlove.auxiliary
 
+import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
@@ -19,7 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.huangyuanlove.auxiliary.bean.Contact
-import com.huangyuanlove.auxiliary.bean.ContactRepository
+import com.huangyuanlove.auxiliary.bean.ContactDatabase
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
 import com.huangyuanlove.wehelper.WXShareMultiImageHelper
 
@@ -27,7 +28,6 @@ class MainActivity : AppCompatActivity() {
 
    private lateinit var  binding:ActivityMainBinding
    private lateinit var contactAdapter:ContactAdapter
-   private lateinit var contactRepository: ContactRepository
    private val contactList = ArrayList<Contact>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        contactRepository= ContactRepository()
 
         binding.launchWechat.setOnClickListener {
             val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
@@ -100,5 +99,17 @@ class MainActivity : AppCompatActivity() {
         bottomSheetDialog.setContentView(view)
         bottomSheetDialog.show()
     }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 10085 && resultCode == Activity.RESULT_OK && data != null) {
+            contactList.clear()
+            contactList.addAll(ContactDatabase.getInstance().contactDAO().getAll())
+            contactList.add(createLastAddContact())
+            contactAdapter.notifyDataSetChanged()
+        }
+    }
+
 
 }
