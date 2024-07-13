@@ -21,10 +21,16 @@
         android:text="打开微信"
        />
     <Button
-        android:id="@+id/share_to_wechat_session"
+        android:id="@+id/insert"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="分享到好友"
+        android:text="插入联系人"
+        />
+    <Button
+        android:id="@+id/query"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="获取所有联系人"
         />
 
 </LinearLayout>

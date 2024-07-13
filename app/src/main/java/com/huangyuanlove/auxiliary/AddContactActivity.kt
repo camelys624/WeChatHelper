@@ -15,7 +15,6 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.bean.Contact
-import com.huangyuanlove.auxiliary.bean.ContactDatabase
 import com.huangyuanlove.auxiliary.databinding.ActivityAddContactBinding
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
@@ -90,7 +89,7 @@ class AddContactActivity : AppCompatActivity() {
         contact.avatar = avatar
         lifecycleScope.launch {
             withContext(Dispatchers.IO){
-                ContactDatabase.getInstance().contactDAO().insertContact(contact)
+
             }
 //            setResult(Activity.RESULT_OK)
 //            finish()

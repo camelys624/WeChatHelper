@@ -1,22 +1,19 @@
 package com.huangyuanlove.auxiliary.bean
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Ignore
-import androidx.room.PrimaryKey
-import org.jetbrains.annotations.NotNull
+import io.objectbox.annotation.Entity
+import io.objectbox.annotation.Id
 
-@Entity(tableName = "contact")
+
+@Entity
 data class Contact(
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name="id")
-    var id:Int = 0,
-    @ColumnInfo(name="name")
+    @Id
+    var id:Long = 0,
     var name:String = "",
-    @ColumnInfo(name="phone")
     var phone:String = "",
-    @ColumnInfo(name="avatar")
     var avatar:String = "",
-    @Ignore
     var last:Boolean =false
-    )
+    ){
+    override fun toString(): String {
+        return "Contact(id=$id, name='$name', phone='$phone', avatar='$avatar', last=$last)"
+    }
+}

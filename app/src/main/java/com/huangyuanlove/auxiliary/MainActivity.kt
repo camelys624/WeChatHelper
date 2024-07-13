@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
@@ -17,12 +18,16 @@ import androidx.core.app.DialogCompat
 import androidx.core.view.LayoutInflaterCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.bean.Contact
-import com.huangyuanlove.auxiliary.bean.ContactDatabase
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
+import com.huangyuanlove.auxiliary.utils.ObjectBox
 import com.huangyuanlove.wehelper.WXShareMultiImageHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,9 +47,27 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }
-        binding.shareToWechatSession.setOnClickListener {
-            WXShareMultiImageHelper.shareToSession(this, arrayOf<Bitmap>())
+        binding.insert.setOnClickListener {
+            val contextBox = ObjectBox.sotre.boxFor(Contact::class.java)
+            val contact = Contact()
+            contact.last = false
+            contact.name = "test"
+            contact.phone = "11111111111"
+            contact.avatar = ""
+            contextBox.put(contact)
+            Toaster.show("插入成功")
+
         }
+        binding.query.setOnClickListener {
+            val contactBox = ObjectBox.sotre.boxFor(Contact::class.java)
+
+            val result = contactBox.all
+            for(contact in result){
+                Log.e("MainActivity",contact.toString())
+            }
+        }
+
+
         binding.contactRv.layoutManager = GridLayoutManager(this,2)
         contactList.add(createLastAddContact())
         contactAdapter = ContactAdapter(contactList)
@@ -105,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 10085 && resultCode == Activity.RESULT_OK && data != null) {
             contactList.clear()
-            contactList.addAll(ContactDatabase.getInstance().contactDAO().getAll())
+
             contactList.add(createLastAddContact())
             contactAdapter.notifyDataSetChanged()
         }
