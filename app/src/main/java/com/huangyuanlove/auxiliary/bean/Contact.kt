@@ -13,7 +13,8 @@ data class Contact(
     ) {
 
     @PrimaryKey(autoGenerate = true)
-    @NotNull
     @ColumnInfo(name="id")
     private var id:Int = 0
+
+    var last =false
 }

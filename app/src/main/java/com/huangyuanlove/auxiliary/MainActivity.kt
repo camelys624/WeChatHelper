@@ -25,9 +25,9 @@ import com.huangyuanlove.wehelper.WXShareMultiImageHelper
 
 class MainActivity : AppCompatActivity() {
 
-   lateinit var  binding:ActivityMainBinding
-   lateinit var contactAdapter:ContactAdapter
-   lateinit var contactRepository: ContactRepository
+   private lateinit var  binding:ActivityMainBinding
+   private lateinit var contactAdapter:ContactAdapter
+   private lateinit var contactRepository: ContactRepository
    private val contactList = ArrayList<Contact>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,16 +47,22 @@ class MainActivity : AppCompatActivity() {
             WXShareMultiImageHelper.shareToSession(this, arrayOf<Bitmap>())
         }
         binding.contactRv.layoutManager = GridLayoutManager(this,2)
+        contactList.add(createLastAddContact())
         contactAdapter = ContactAdapter(contactList)
+
         contactAdapter.onItemClick = object :OnItemClick{
             override fun onItemClick(contact: Contact) {
-                val bottomSheetDialog = BottomSheetDialog(this@MainActivity)
-                val view =layoutInflater.inflate(R.layout.view_contact_click_bottom_sheet_dialog,null)
-                bottomSheetDialog.setContentView(view)
-                bottomSheetDialog.show()
+                if(contact.last){
+                    showAddContactDialog()
+                }else{
+                    showMakeCallDialog()
+                }
+
+
 
             }
         }
+
         binding.contactRv.adapter = contactAdapter
 
         contactAdapter.notifyDataSetChanged()
@@ -78,10 +84,21 @@ class MainActivity : AppCompatActivity() {
     private fun isAccessibilitySettingOn():Boolean{
        return WXShareMultiImageHelper.isServiceEnabled(this)
 
+    }
 
-
-
-
+    private fun createLastAddContact():Contact{
+        val contact = Contact()
+        contact.last = true
+        return contact
+    }
+    private fun showAddContactDialog(){
+      startActivityForResult(Intent(this,AddContactActivity::class.java),10085)
+    }
+    private fun showMakeCallDialog(){
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view =layoutInflater.inflate(R.layout.view_contact_click_bottom_sheet_dialog,null)
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.show()
     }
 
 }

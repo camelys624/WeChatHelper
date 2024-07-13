@@ -1,11 +1,12 @@
 package com.huangyuanlove.auxiliary
 
 import android.app.Application
+import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.utils.ContextUtil
 
 class MyApplication:Application() {
     override fun onCreate() {
         super.onCreate()
-        ContextUtil.context = this
+        Toaster.init(this);
     }
 }
