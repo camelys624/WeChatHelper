@@ -29,13 +29,14 @@ private const val Step_ClickVideoButton = Step_Select_Video_Call + 1
 
 private const val Step_search_contact = 100
 private const val Step_search_and_click_video = Step_search_contact + 1
+private const val Step_start_video_chat = Step_search_and_click_video + 1
 
 
 private const val USER_NAME = "穷的清心寡欲"
 
 
 private val DISCOVER_TEXT_LIST = arrayOf("通讯录")
-private val VIDEO_TEXT_LIST = arrayOf(USER_NAME)
+private val VIDEO_TEXT_LIST = arrayOf("音视频通话")
 private val Contact_LIST = arrayOf(USER_NAME)
 
 /**
@@ -81,36 +82,51 @@ class WXShareMultiImageService : AccessibilityService() {
 
                 Step_search_contact -> {
 //                    getRootNodeInfo().clickNodeByText(Contact_LIST, 6)
-                    val contactNode = getRootNodeInfo().getNodeByText(Contact_LIST)
+                    var contactNode = getRootNodeInfo().getNodeByText(Contact_LIST)
                     if (contactNode == null) {
                         val contactListNode = getContactListView()
                         if (contactListNode == null) {
                             Log.e("huangyuan", "没有找到联系人列表")
                         } else {
                             Log.e("huangyuan", "找到了联系人列表,开始滑动")
-                            var scrollResult =
-                                contactListNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+
+                            val scrollResult = contactListNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
                             if (scrollResult) {
                                 Log.e("huangyuan", "滑动成功")
-
-                            } else {
-                                Log.e("huangyuan", "滑动失败，换个方向")
-                                scrollResult =
-                                    contactListNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
-                                if (scrollResult) {
-                                    Log.e("huangyuan", "换个方向也失败了")
-                                } else {
-                                    Log.e("huangyuan", "换个方向滑动成功")
-                                }
-
                             }
                         }
 
+
+                    }else{
+                        repeat(6) {
+                            contactNode = contactNode?.parent
+                        }
+                        Log.e("huangyuan", "Click--> ${contactNode?.className}")
+
+                        contactNode?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        currentStep = Step_search_and_click_video
                     }
-                    currentStep = 10099
+
+
 
                 }
-
+                Step_search_and_click_video->{
+                    var contactNode = getRootNodeInfo().getNodeByText(VIDEO_TEXT_LIST)
+                    if(contactNode==null){
+                        Log.e("huangyuan","没找到音视频通话按钮")
+                    }else{
+                        Log.e("huangyuan","找到音视频通话按钮")
+                        repeat(2){
+                            contactNode = contactNode?.parent
+                        }
+                        Log.e("huangyuan","找到音视频通话按钮--> ${contactNode?.className}")
+                        contactNode?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        currentStep= Step_start_video_chat
+                    }
+                }
+                Step_start_video_chat->{
+                    getRootNodeInfo().clickNodeByText(arrayOf("视频通话"), 3)
+                }
                 else -> {
                     Log.e("huangyuan", "${msg.what} 正在开发")
                 }
@@ -120,6 +136,7 @@ class WXShareMultiImageService : AccessibilityService() {
 
 
     private fun getContactListView(): AccessibilityNodeInfo? {
+
         Log.e("huangyuan", "----开始遍历----")
         val queue = LinkedList<AccessibilityNodeInfo>()
         queue.offer(rootInActiveWindow)
@@ -131,7 +148,7 @@ class WXShareMultiImageService : AccessibilityService() {
             }
 
             info.log()
-            if (info.className.equals("android.widget.ListView") && info.isScrollable) {
+            if (info.className.equals("androidx.recyclerview.widget.RecyclerView") && info.isScrollable) {
                 return info
             }
 
@@ -423,6 +440,16 @@ class WXShareMultiImageService : AccessibilityService() {
 
                     handler.removeMessages(Step_search_contact)
                     handler.sendEmptyMessageDelayed(Step_search_contact, 2000)
+                }
+
+                Step_search_and_click_video->{
+                    handler.removeMessages(Step_search_and_click_video)
+                    handler.sendEmptyMessageDelayed(Step_search_and_click_video, 2000)
+                }
+
+                Step_start_video_chat->{
+                    handler.removeMessages(Step_start_video_chat)
+                    handler.sendEmptyMessageDelayed(Step_start_video_chat, 2000)
                 }
 
                 else -> {
