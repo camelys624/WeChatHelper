@@ -13,6 +13,8 @@ import com.huangyuanlove.wehelper.constant.WX_PACKAGE_NAME
 import com.huangyuanlove.wehelper.utils.EasyTimer
 import java.util.LinkedList
 import android.graphics.Rect
+import android.view.accessibility.AccessibilityWindowInfo
+
 private const val Step_Start = 1
 private const val Step_ClickSearchButton = Step_Start + 1
 private const val Step_FindSearchInputText = Step_ClickSearchButton + 1
@@ -25,14 +27,15 @@ private const val Step_Select_Video_Call = Step_FindVideoButton + 1
 private const val Step_ClickVideoButton = Step_Select_Video_Call + 1
 
 
-private const val Step_search_contact = 11
+private const val Step_search_contact = 100
+private const val Step_search_and_click_video = Step_search_contact + 1
 
 
 private const val USER_NAME = "穷的清心寡欲"
 
 
 private val DISCOVER_TEXT_LIST = arrayOf("通讯录")
-private val VIDEO_TEXT_LIST = arrayOf("视频通话")
+private val VIDEO_TEXT_LIST = arrayOf(USER_NAME)
 private val Contact_LIST = arrayOf(USER_NAME)
 
 /**
@@ -45,6 +48,8 @@ class WXShareMultiImageService : AccessibilityService() {
 
     // 当前步骤
     private var currentStep = Step_Start
+    private var video_parent_count = 0
+
 
     private val handler: Handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -69,13 +74,41 @@ class WXShareMultiImageService : AccessibilityService() {
 
 
                 ///////////////////
-                Step_Start ->{
-                     getRootNodeInfo()?.clickNodeByText(DISCOVER_TEXT_LIST, 2)
-                     currentStep =  Step_search_contact
+                Step_Start -> {
+                    getRootNodeInfo().clickNodeByText(DISCOVER_TEXT_LIST, 2)
+                    currentStep = Step_search_contact
                 }
-                Step_search_contact->{
-                    visitNodeInfo(rootInActiveWindow)
-                    getRootNodeInfo()?.clickNodeByText(Contact_LIST, 3)
+
+                Step_search_contact -> {
+//                    getRootNodeInfo().clickNodeByText(Contact_LIST, 6)
+                    val contactNode = getRootNodeInfo().getNodeByText(Contact_LIST)
+                    if (contactNode == null) {
+                        val contactListNode = getContactListView()
+                        if (contactListNode == null) {
+                            Log.e("huangyuan", "没有找到联系人列表")
+                        } else {
+                            Log.e("huangyuan", "找到了联系人列表,开始滑动")
+                            var scrollResult =
+                                contactListNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                            if (scrollResult) {
+                                Log.e("huangyuan", "滑动成功")
+
+                            } else {
+                                Log.e("huangyuan", "滑动失败，换个方向")
+                                scrollResult =
+                                    contactListNode.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                                if (scrollResult) {
+                                    Log.e("huangyuan", "换个方向也失败了")
+                                } else {
+                                    Log.e("huangyuan", "换个方向滑动成功")
+                                }
+
+                            }
+                        }
+
+                    }
+                    currentStep = 10099
+
                 }
 
                 else -> {
@@ -86,38 +119,71 @@ class WXShareMultiImageService : AccessibilityService() {
     }
 
 
-   private  fun findDirectoryAndClick(){
-       val queue = LinkedList<AccessibilityNodeInfo>()
-       queue.offer(rootInActiveWindow)
-       var info: AccessibilityNodeInfo?
-       while (!queue.isEmpty()) {
-           info = queue.poll()
-           if (info == null) {
-               continue
-           }
-           Log.e(
-               "huangyuan",
-               "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} ,${info.isVisibleToUser}"
-           )
-           //更多功能按钮
-           if (TextUtils.equals(
-                   info.contentDescription,
-                   "通讯录"
-               ) && TextUtils.equals("android.widget.ImageButton", info.className)
-           ) {
-               Log.e("huangyuan", "找到了 通讯录 ,类型是--> ${info.className}")
-               currentStep = Step_ClickVideoMenu
-               info.parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-               currentStep = Step_FindVideoButton
-               return
-           }
+    private fun getContactListView(): AccessibilityNodeInfo? {
+        Log.e("huangyuan", "----开始遍历----")
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(rootInActiveWindow)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+
+            info.log()
+            if (info.className.equals("android.widget.ListView") && info.isScrollable) {
+                return info
+            }
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
 
 
-           for (i in 0 until info.childCount) {
-               queue.offer(info.getChild(i))
-           }
-       }
-   }
+        }
+        Log.e("huangyuan", "----结束遍历----")
+        return null
+    }
+
+
+    private fun AccessibilityNodeInfo.log() {
+        val nodeInfo = StringBuilder("nodeInfo--> ${className} ,")
+        val rect = Rect()
+        getBoundsInScreen(rect)
+        nodeInfo.append("rect:$rect ,width:${rect.width()} ,height:${rect.height()} ,clickable:${isClickable} ,isScrollable:${isScrollable}")
+        Log.e("huangyuan", nodeInfo.toString())
+    }
+
+
+    private fun findDirectoryAndClick() {
+        val queue = LinkedList<AccessibilityNodeInfo>()
+        queue.offer(rootInActiveWindow)
+        var info: AccessibilityNodeInfo?
+        while (!queue.isEmpty()) {
+            info = queue.poll()
+            if (info == null) {
+                continue
+            }
+            info.log()
+            //更多功能按钮
+            if (TextUtils.equals(
+                    info.contentDescription,
+                    "通讯录"
+                ) && TextUtils.equals("android.widget.ImageButton", info.className)
+            ) {
+                Log.e("huangyuan", "找到了 通讯录 ,类型是--> ${info.className}")
+                currentStep = Step_ClickVideoMenu
+                info.parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                currentStep = Step_FindVideoButton
+                return
+            }
+
+
+            for (i in 0 until info.childCount) {
+                queue.offer(info.getChild(i))
+            }
+        }
+    }
 
 
 //    -----------------------------------------------
@@ -138,16 +204,19 @@ class WXShareMultiImageService : AccessibilityService() {
         parentCount: Int = 0
     ) {
         var node = getNodeByText(textList)
-        if(node !=null){
-            Log.e("huangyuan","找到了 ${textList[0]}")
-        }else{
-            Log.e("huangyuan","没有找到 ${textList[0]}")
+        if (node != null) {
+            Log.e("huangyuan", "找到了 ${textList[0]}")
+        } else {
+            Log.e("huangyuan", "没有找到 ${textList[0]}")
         }
         repeat(parentCount) {
             node = node?.parent
         }
+        Log.e("huangyuan", "Click--> ${node?.className}")
+
         node?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
     }
+
     /**
      * 查找指定文案的节点
      * @param textList 备选文案列表，按顺序查找，找到即停止查找
@@ -164,8 +233,6 @@ class WXShareMultiImageService : AccessibilityService() {
     }
 
 
-
-
     private fun visitNodeInfo(nodeInfo: AccessibilityNodeInfo) {
         Log.e("huangyuan", "----开始遍历----")
         val queue = LinkedList<AccessibilityNodeInfo>()
@@ -176,20 +243,9 @@ class WXShareMultiImageService : AccessibilityService() {
             if (info == null) {
                 continue
             }
-            if (info.isClickable) {
-                Log.e(
-                    "huangyuan",
-                    "nodeinfo--> $info "
-                )
-            }
 
-//            if (info.isClickable) {
-//                info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-//                Log.e(
-//                    "huangyuan",
-//                    "nodeinfo--> ${info.className} , ${info} "
-//                )
-//            }
+            info.log()
+
 
             for (i in 0 until info.childCount) {
                 queue.offer(info.getChild(i))
@@ -204,8 +260,17 @@ class WXShareMultiImageService : AccessibilityService() {
     private fun findVideoFunctionAndClick() {
         //先找到更多按钮，点击之后展开更多输入类型，点击视频通话，在底部弹窗中点击 视频通话
 
+        var rootNodeInfo: AccessibilityNodeInfo? = null
+        for (window in windows) {
+            if (window.type == AccessibilityWindowInfo.TYPE_APPLICATION) {
+                rootNodeInfo = window.root
+            }
+        }
+        val root = rootNodeInfo ?: rootInActiveWindow
+
+
         val queue = LinkedList<AccessibilityNodeInfo>()
-        queue.offer(rootInActiveWindow)
+        queue.offer(root)
         var info: AccessibilityNodeInfo?
         while (!queue.isEmpty()) {
             info = queue.poll()
@@ -217,60 +282,23 @@ class WXShareMultiImageService : AccessibilityService() {
 //                "nodeinfo--> ${info.className} , ${info.text} ,${info.viewIdResourceName} , ${info.contentDescription} "
 //            )
             //更多功能按钮
-            if (TextUtils.equals(info.text, "视频通话")) {
-                Log.e(
-                    "huangyuan",
-                    "找到了 视频通话按钮 ,类型是--> ${info.className}  ${info.toString()}"
-                )
-                while (info != null && !info.className.contains("GridView")) {
+            if (TextUtils.equals(info.text, "相册")) {
+                Log.e("huangyuan", "找到了 视频通话按钮 ,类型是--> ${info.className}  ${info.text}")
+
+                while (info != null) {
+                    if (info.isClickable) {
+                        Log.e("huangyuan", "isClickable is true")
+                        info.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    }
+                    if (info.parent != null && info.parent.className.contains("GridView")) {
+                        break
+                    }
                     info = info.parent
                 }
                 if (info != null) {
-                    if (info.getChild(0) != null) {
-                        Log.e("huangyuan", "info.getChild(0) click")
-                        val tmpNode = info.getChild(0)
-                        val nodeRect = Rect()
-                        tmpNode.getBoundsInScreen(nodeRect)
-                        Log.e("huangyuan","要点击的坐标点 ${nodeRect.centerX()}  ${nodeRect.centerY()}")
-                        tmpNode.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
-                    } else {
-                        Log.e("huangyuan", "info.getChild(0) is null")
-                    }
-                } else {
-                    Log.e("huangyuan", "info is null")
+                    visitNodeInfo(info)
                 }
 
-//                while (info != null && !info.className.contains("GridView")) {
-//                    if(info.isClickable){
-//                        val nodeRect = Rect()
-//                        info.getBoundsInScreen(nodeRect)
-//                        Log.e("huangyuan","要点击的坐标点 ${nodeRect.centerX()}  ${nodeRect.centerY()}")
-//
-//                        val gestureDescriptionBuilder =  GestureDescription.Builder()
-//                        val path = Path()
-//                        path.moveTo(nodeRect.centerX().toFloat(),nodeRect.centerY().toFloat())
-//                        val callBack = object: GestureResultCallback() {
-//                            override fun onCancelled(gestureDescription: GestureDescription?) {
-//                                super.onCancelled(gestureDescription)
-//                                Log.e("huanyuan","GestureResultCallback#onCancelled")
-//                            }
-//
-//                            override fun onCompleted(gestureDescription: GestureDescription?) {
-//                                super.onCompleted(gestureDescription)
-//                                Log.e("huanyuan","GestureResultCallback#onCompleted")
-//                            }
-//                        }
-//                        gestureDescriptionBuilder.addStroke(GestureDescription.StrokeDescription(path,0L,1000L))
-//                        val result =  dispatchGesture(gestureDescriptionBuilder.build(),callBack,handler)
-//                        Log.e("huangyuan","点击结果--》 $result")
-//
-//                    }
-//                    info = info.parent
-//
-//                }
-//                if (info != null) {
-//                    visitNodeInfo(info)
-//                }
 
                 return
             }
@@ -388,9 +416,10 @@ class WXShareMultiImageService : AccessibilityService() {
 
                 Step_FindVideoButton -> {
                     handler.removeMessages(Step_FindVideoButton)
-                    handler.sendEmptyMessageDelayed(Step_FindVideoButton, 500)
+                    handler.sendEmptyMessageDelayed(Step_FindVideoButton, 1000)
                 }
-                Step_search_contact->{
+
+                Step_search_contact -> {
 
                     handler.removeMessages(Step_search_contact)
                     handler.sendEmptyMessageDelayed(Step_search_contact, 2000)
@@ -515,8 +544,7 @@ class WXShareMultiImageService : AccessibilityService() {
 
 
     // 获取 APPLICATION 的 Window 根节点
-    private fun getRootNodeInfo(): AccessibilityNodeInfo? {
-
+    private fun getRootNodeInfo(): AccessibilityNodeInfo {
         return rootInActiveWindow
     }
 
