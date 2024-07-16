@@ -1,11 +1,14 @@
 package com.huangyuanlove.auxiliary
 
+import android.app.ActionBar
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
+import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -13,6 +16,7 @@ import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.hjq.toast.Toaster
+import com.huangyuanlove.auxiliary.base.BaseActivity
 import com.huangyuanlove.auxiliary.bean.Contact
 import com.huangyuanlove.auxiliary.databinding.ActivityAddContactBinding
 import com.huangyuanlove.auxiliary.utils.ObjectBox
@@ -23,21 +27,41 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
-class AddContactActivity : AppCompatActivity() {
+class AddContactActivity : BaseActivity() {
 
     private lateinit var binding: ActivityAddContactBinding
     private var avatar: String = ""
-
-    private val REQUEST_CODE_PICK_IMAGE = 10001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddContactBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        title = "添加联系人"
+
+
+
 
         binding.save.setOnClickListener {
             save()
         }
+
+        val pickImageLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+            result->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val imageUri = result.data?.data
+                imageUri?.let {
+                    avatar = copyToInternal(it)
+                    if (avatar.isEmpty()) {
+                        Toaster.show("图片使用失败，请重新选择")
+                    } else {
+                        Glide.with(this).load(avatar).into(binding.avatar)
+                    }
+
+                }
+
+        }
+        }
+
         binding.avatar.setOnClickListener {
             XXPermissions.with(this@AddContactActivity).permission(Permission.READ_EXTERNAL_STORAGE)
                 .request(object : OnPermissionCallback {
@@ -50,7 +74,7 @@ class AddContactActivity : AppCompatActivity() {
                         Toaster.show("获取权限成功")
                         val intent = Intent(Intent.ACTION_PICK)
                         intent.type = "image/*"
-                        startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
+                        pickImageLaunch.launch(intent)
                     }
 
                     override fun onDenied(
@@ -105,23 +129,6 @@ class AddContactActivity : AppCompatActivity() {
         }
 
 
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
-            val imageUri = data.data
-            imageUri?.let {
-                avatar = copyToInternal(it)
-                if (avatar.isEmpty()) {
-                    Toaster.show("图片使用失败，请重新选择")
-                } else {
-                    Glide.with(this).load(avatar).into(binding.avatar)
-                }
-
-            }
-
-        }
     }
 
     private fun copyToInternal(uri: Uri): String {

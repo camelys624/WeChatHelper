@@ -49,20 +49,18 @@ class MainActivity : AppCompatActivity() {
         contactAdapter = ContactAdapter(contactList)
 
 
-        val launch = registerForActivityResult(ActivityResultContracts.StartActivityForResult(),object:ActivityResultCallback<ActivityResult>{
-            override fun onActivityResult(result: ActivityResult) {
-                if(result.resultCode == Activity.RESULT_OK){
-                    contactList.clear()
-                    val tmp = ObjectBox.sotre.boxFor(Contact::class.java).all
-                    contactList.addAll(tmp)
-                    contactList.add(createLastAddContact())
-                    log(contactList.size.toString())
-                    log(contactList.toString())
-                    contactAdapter.notifyDataSetChanged()
-                }
+        val launch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                contactList.clear()
+                val tmp = ObjectBox.sotre.boxFor(Contact::class.java).all
+                contactList.addAll(tmp)
+                contactList.add(createLastAddContact())
+                log(contactList.size.toString())
+                log(contactList.toString())
+                contactAdapter.notifyDataSetChanged()
             }
-
-        })
+        }
 
         contactAdapter.onItemClick = object : OnItemClick {
             override fun onItemClick(contact: Contact) {
