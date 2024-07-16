@@ -5,11 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.hjq.permissions.OnPermissionCallback
@@ -17,11 +14,10 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.bean.Contact
-import com.huangyuanlove.auxiliary.bean.MyObjectBox
 import com.huangyuanlove.auxiliary.databinding.ActivityAddContactBinding
-import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
 import com.huangyuanlove.auxiliary.utils.ObjectBox
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -102,9 +98,9 @@ class AddContactActivity : AppCompatActivity() {
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 ObjectBox.sotre.boxFor(Contact::class.java).put(contact)
-                setResult(Activity.RESULT_OK)
-                finish()
             }
+            setResult(Activity.RESULT_OK)
+            finish()
 
         }
 

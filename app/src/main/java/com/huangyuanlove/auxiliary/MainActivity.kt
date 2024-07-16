@@ -1,26 +1,18 @@
 package com.huangyuanlove.auxiliary
 
 import android.app.Activity
-import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnClickListener
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDialog
-import androidx.core.app.DialogCompat
-import androidx.core.view.LayoutInflaterCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -31,9 +23,11 @@ import com.hjq.toast.Toaster
 import com.huangyuanlove.auxiliary.bean.Contact
 import com.huangyuanlove.auxiliary.databinding.ActivityMainBinding
 import com.huangyuanlove.auxiliary.utils.ObjectBox
-import com.huangyuanlove.wehelper.WXShareMultiImageHelper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.huangyuanlove.wehelper.constant.WX_PACKAGE_NAME
+import com.huangyuanlove.wehelper.utils.Action
+import com.huangyuanlove.wehelper.utils.ServiceManager
+import com.huangyuanlove.wehelper.utils.Step_Start
+import com.huangyuanlove.wehelper.utils.WeChatCallStepManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,43 +42,32 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.launchWechat.setOnClickListener {
-            val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
-            intent?.let {
-                startActivity(intent)
-            }
-        }
-        binding.insert.setOnClickListener {
-            val contextBox = ObjectBox.sotre.boxFor(Contact::class.java)
-            val contact = Contact()
-            contact.last = false
-            contact.name = "test"
-            contact.phone = "11111111111"
-            contact.avatar = ""
-            contextBox.put(contact)
-            Toaster.show("插入成功")
-
-        }
-        binding.query.setOnClickListener {
-            val contactBox = ObjectBox.sotre.boxFor(Contact::class.java)
-
-            val result = contactBox.all
-            for (contact in result) {
-                Log.e("MainActivity", contact.toString())
-            }
-        }
-
-
         binding.contactRv.layoutManager = GridLayoutManager(this, 2)
         binding.contactRv.addItemDecoration(GridSpacingItemDecoration(2, 45, true))
         contactList.addAll(ObjectBox.sotre.boxFor(Contact::class.java).all)
         contactList.add(createLastAddContact())
         contactAdapter = ContactAdapter(contactList)
 
+
+        val launch = registerForActivityResult(ActivityResultContracts.StartActivityForResult(),object:ActivityResultCallback<ActivityResult>{
+            override fun onActivityResult(result: ActivityResult) {
+                if(result.resultCode == Activity.RESULT_OK){
+                    contactList.clear()
+                    val tmp = ObjectBox.sotre.boxFor(Contact::class.java).all
+                    contactList.addAll(tmp)
+                    contactList.add(createLastAddContact())
+                    log(contactList.size.toString())
+                    log(contactList.toString())
+                    contactAdapter.notifyDataSetChanged()
+                }
+            }
+
+        })
+
         contactAdapter.onItemClick = object : OnItemClick {
             override fun onItemClick(contact: Contact) {
                 if (contact.last) {
-                    startActivityForResult(Intent(this@MainActivity, AddContactActivity::class.java), 10085)
+                    launch.launch(Intent(this@MainActivity, AddContactActivity::class.java),)
                 } else {
                     showMakeCallDialog(contact)
                 }
@@ -101,7 +84,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun isAccessibilitySettingOn(): Boolean {
-        return WXShareMultiImageHelper.isServiceEnabled(this)
+        return ServiceManager.isServiceEnabled(this)
 
     }
 
@@ -118,15 +101,24 @@ class MainActivity : AppCompatActivity() {
 
         view.findViewById<View>(R.id.wechat_video).setOnClickListener {
             if(checkAccessibility()){
-                val intent = packageManager.getLaunchIntentForPackage("com.tencent.mm")
+                val intent = packageManager.getLaunchIntentForPackage(WX_PACKAGE_NAME)
                 intent?.let {
+                    WeChatCallStepManager.step = Step_Start
+                    WeChatCallStepManager.action = Action.video_call
+                    WeChatCallStepManager.name = contact.name
                     startActivity(intent)
                 }
             }
         }
         view.findViewById<View>(R.id.wechat_phone).setOnClickListener {
             if(checkAccessibility()){
-
+                val intent = packageManager.getLaunchIntentForPackage(WX_PACKAGE_NAME)
+                intent?.let {
+                    WeChatCallStepManager.step = Step_Start
+                    WeChatCallStepManager.action = Action.voice_call
+                    WeChatCallStepManager.name = contact.name
+                    startActivity(intent)
+                }
             }
         }
         view.findViewById<View>(R.id.make_phone_call).setOnClickListener {
@@ -166,18 +158,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 10085 && resultCode == Activity.RESULT_OK && data != null) {
-            contactList.clear()
-            val result = ObjectBox.sotre.boxFor(Contact::class.java).all
-            contactList.addAll(result)
-            contactList.add(createLastAddContact())
-            log(contactList.size.toString())
-            log(contactList.toString())
-            contactAdapter.notifyDataSetChanged()
-        }
-    }
 
     private fun log(msg: String) {
         Log.e(tag, msg)

@@ -5,5 +5,5 @@
     android:accessibilityFeedbackType="feedbackAllMask"
     android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"
-    android:description="@string/wx_share_multi_image_service_helper"
+    android:description="@string/wx_make_call_service_helper"
     android:notificationTimeout="100"/>

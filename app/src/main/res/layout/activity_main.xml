@@ -7,31 +7,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <Button
-            android:id="@+id/launch_wechat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="打开微信"
-            />
-        <Button
-            android:id="@+id/insert"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="插入联系人"
-            />
-        <Button
-            android:id="@+id/query"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="获取所有联系人"
-            />
-    </LinearLayout>
-
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/contact_rv"
         android:layout_width="match_parent"
