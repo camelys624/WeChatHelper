@@ -2,18 +2,33 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
-    <TextView
+    <LinearLayout
         android:id="@+id/wechat_video"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:text="微信视频"
-        android:textSize="18dp" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_videocam_24" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:gravity="center_horizontal"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:text="微信视频"
+            android:textSize="18dp" />
+    </LinearLayout>
+
 
     <View
         android:layout_width="match_parent"
@@ -22,15 +37,28 @@
         android:layout_marginEnd="15dp"
         android:background="#f7f7f7" />
 
-    <TextView
-        android:id="@+id/wechat_phone"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:text="微信电话"
-        android:textSize="18dp" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_keyboard_voice_24" />
+
+        <TextView
+            android:id="@+id/wechat_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:gravity="center_horizontal"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:text="微信电话"
+            android:textSize="18dp" />
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
@@ -39,14 +67,27 @@
         android:layout_marginEnd="15dp"
         android:background="#f7f7f7" />
 
-    <TextView
-        android:id="@+id/make_phone_call"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:text="手机电话"
-        android:textSize="18dp" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_call_24" />
+
+        <TextView
+            android:id="@+id/make_phone_call"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:gravity="center_horizontal"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:text="手机电话"
+            android:textSize="18dp" />
+    </LinearLayout>
 
 </LinearLayout>

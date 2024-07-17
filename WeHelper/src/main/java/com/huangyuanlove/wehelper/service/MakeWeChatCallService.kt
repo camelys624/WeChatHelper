@@ -10,6 +10,8 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.huangyuanlove.wehelper.constant.WX_PACKAGE_NAME
 import java.util.LinkedList
 import android.graphics.Rect
+import com.huangyuanlove.wehelper.constant.INVOKE_DAILY_TIME_MMKV_NAME
+import com.huangyuanlove.wehelper.constant.INVOKE_DAILY_TIME_MULTIPLE
 import com.huangyuanlove.wehelper.utils.Action
 import com.huangyuanlove.wehelper.utils.Step_Start
 import com.huangyuanlove.wehelper.utils.Step_idle
@@ -17,8 +19,7 @@ import com.huangyuanlove.wehelper.utils.Step_search_and_click_video
 import com.huangyuanlove.wehelper.utils.Step_search_contact
 import com.huangyuanlove.wehelper.utils.Step_start_video_chat
 import com.huangyuanlove.wehelper.utils.WeChatCallStepManager
-
-
+import com.tencent.mmkv.MMKV
 
 
 private val DISCOVER_TEXT_LIST = arrayOf("通讯录")
@@ -35,27 +36,28 @@ class MakeWeChatCallService : AccessibilityService() {
 
         if (event.packageName == WX_PACKAGE_NAME && (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)) {
             Log.e("huangyuan", "微信活动 当前步骤--> ${WeChatCallStepManager.step}")
+            val timeMultiple = MMKV.mmkvWithID(INVOKE_DAILY_TIME_MMKV_NAME).getInt(INVOKE_DAILY_TIME_MULTIPLE,1)
             when (WeChatCallStepManager.step) {
                 Step_Start -> {
                     handler.removeMessages(Step_Start)
-                    handler.sendEmptyMessageDelayed(Step_Start, 500)
+                    handler.sendEmptyMessageDelayed(Step_Start, 100 * timeMultiple.toLong())
                 }
 
 
                 Step_search_contact -> {
 
                     handler.removeMessages(Step_search_contact)
-                    handler.sendEmptyMessageDelayed(Step_search_contact, 2000)
+                    handler.sendEmptyMessageDelayed(Step_search_contact, 100 * timeMultiple.toLong())
                 }
 
                 Step_search_and_click_video -> {
                     handler.removeMessages(Step_search_and_click_video)
-                    handler.sendEmptyMessageDelayed(Step_search_and_click_video, 2000)
+                    handler.sendEmptyMessageDelayed(Step_search_and_click_video, 100* timeMultiple.toLong())
                 }
 
                 Step_start_video_chat -> {
                     handler.removeMessages(Step_start_video_chat)
-                    handler.sendEmptyMessageDelayed(Step_start_video_chat, 2000)
+                    handler.sendEmptyMessageDelayed(Step_start_video_chat, 500* timeMultiple.toLong())
                 }
 
                 else -> {

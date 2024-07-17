@@ -13,7 +13,7 @@ activity = "1.8.0"
 constraintlayout = "2.1.4"
 objectboxGradlePlugin = "4.0.1"
 toaster = "12.6"
-uinspector = "1.0.5"
+uinspector = "2.0.20"
 xxpermissions = "18.68"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -28,7 +28,7 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 objectbox-gradle-plugin = { module = "io.objectbox:objectbox-gradle-plugin", version.ref = "objectboxGradlePlugin" }
 toaster = { module = "com.github.getActivity:Toaster", version.ref = "toaster" }
-uinspector = { module = "com.huya.mobile:Uinspector", version.ref = "uinspector" }
+uinspector = { module = "io.github.yvescheung:Uinspector", version.ref = "uinspector" }
 xxpermissions = { module = "com.github.getActivity:XXPermissions", version.ref = "xxpermissions" }
 
 

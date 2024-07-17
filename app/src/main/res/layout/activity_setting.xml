@@ -17,13 +17,31 @@
         app:titleTextColor="@color/white">
 
     </androidx.appcompat.widget.Toolbar>
+    <LinearLayout
+        android:layout_marginTop="15dp"
+        android:background="@drawable/arc_primary_color_bg"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
 
     <TextView
+        android:id="@+id/invoke_time_tip"
+        android:drawablePadding="6dp"
+        android:drawableEnd="@drawable/baseline_info_24"
+        android:layout_marginStart="15dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textSize="18dp"
+        android:textColor="@color/black"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="执行速度" />
+        android:text="执行速度变慢" />
 
     <LinearLayout
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -31,19 +49,35 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.1秒" />
-
-        <SeekBar
-            android:id="@+id/sensitivity"
+            android:text="1倍" />
+        <LinearLayout
+            android:gravity="center"
+            android:layout_weight="1"
+            android:orientation="vertical"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_height="wrap_content">
+            <SeekBar
+                android:id="@+id/sensitivity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+            <TextView
+                android:layout_marginTop="5dp"
+                android:textSize="18dp"
+                tools:text="当前：1倍"
+                android:id="@+id/current_multiple"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10秒" />
+            android:text="20倍" />
 
+    </LinearLayout>
     </LinearLayout>
 
 
