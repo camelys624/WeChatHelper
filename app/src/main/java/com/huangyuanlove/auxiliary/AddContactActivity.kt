@@ -1,33 +1,32 @@
 package com.huangyuanlove.auxiliary
 
-import android.app.ActionBar
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
-import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.hjq.toast.Toaster
-import com.huangyuanlove.auxiliary.base.BaseActivity
 import com.huangyuanlove.auxiliary.bean.Contact
 import com.huangyuanlove.auxiliary.databinding.ActivityAddContactBinding
 import com.huangyuanlove.auxiliary.utils.ObjectBox
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
-class AddContactActivity : BaseActivity() {
+class AddContactActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddContactBinding
     private var avatar: String = ""
@@ -36,31 +35,35 @@ class AddContactActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAddContactBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        title = "添加联系人"
-
-
-
+        val toolbar = binding.toolBar
+        toolbar.title = "添加联系人"
+        setSupportActionBar(toolbar)
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
 
         binding.save.setOnClickListener {
             save()
         }
 
-        val pickImageLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
-            result->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val imageUri = result.data?.data
-                imageUri?.let {
-                    avatar = copyToInternal(it)
-                    if (avatar.isEmpty()) {
-                        Toaster.show("图片使用失败，请重新选择")
-                    } else {
-                        Glide.with(this).load(avatar).into(binding.avatar)
+        val pickImageLaunch =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val imageUri = result.data?.data
+                    imageUri?.let {
+                        avatar = copyToInternal(it)
+                        if (avatar.isEmpty()) {
+                            Toaster.show("图片使用失败，请重新选择")
+                        } else {
+                            Glide.with(this).load(avatar)
+                                .apply(RequestOptions().transform(CenterCrop(), RoundedCorners(8)))
+                                .into(binding.avatar)
+                        }
+
                     }
 
                 }
-
-        }
-        }
+            }
 
         binding.avatar.setOnClickListener {
             XXPermissions.with(this@AddContactActivity).permission(Permission.READ_EXTERNAL_STORAGE)
@@ -94,11 +97,22 @@ class AddContactActivity : BaseActivity() {
                     }
                 })
         }
+        binding.wechatMarkTip.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("昵称提示")
+                .setMessage("请避免使用单个英文字母作为微信昵称或备注，如果微信昵称为单个英文字母，可使用备注的形式修改展示在微信联系人列表中的名字")
+                .setPositiveButton(
+                    "我知道了"
+                ) { dialog, which -> dialog?.dismiss() }
+                .create().show()
+        }
 
 
     }
 
+
     private fun save() {
+
         if (TextUtils.isEmpty(avatar)) {
             Toaster.show("请选择头像")
             return
@@ -108,16 +122,52 @@ class AddContactActivity : BaseActivity() {
             Toaster.show("请输入微信昵称")
             return
         }
+        if(wechatMark.length == 1){
+            val singleChar = wechatMark.toCharArray()[0]
+            if(singleChar in 'a'..'z'){
+                Toaster.show("不能使用单个字母作为昵称")
+                return
+            }
+            if(singleChar in 'A'..'Z'){
+                Toaster.show("不能使用单个字母作为昵称")
+                return
+            }
+        }
+
         val phone = binding.phone.text.toString().trim()
         if (TextUtils.isEmpty(phone)) {
             Toaster.show("请输入手机号码")
             return
         }
 
+
+
+
+        if (phone.length != 11) {
+            AlertDialog.Builder(this)
+                .setTitle("电话号码提示")
+                .setMessage("电话号码不是 11 位数字，请确认")
+                .setNegativeButton("重新输入") { dialog, _ ->
+                    dialog?.dismiss()
+                }
+                .setPositiveButton(
+                    "保存"
+                ) { dialog, _ ->
+                    dialog?.dismiss()
+                    saveAndFinish()
+                }
+                .create().show()
+        } else {
+            saveAndFinish()
+        }
+    }
+
+
+    private fun saveAndFinish() {
         val contact = Contact()
         contact.last = false
-        contact.name = wechatMark
-        contact.phone = phone
+        contact.name = binding.wechatMark.text.toString().trim()
+        contact.phone = binding.phone.text.toString().trim()
         contact.avatar = avatar
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -127,9 +177,8 @@ class AddContactActivity : BaseActivity() {
             finish()
 
         }
-
-
     }
+
 
     private fun copyToInternal(uri: Uri): String {
         try {

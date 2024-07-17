@@ -45,5 +45,6 @@ dependencies {
     implementation libs.glide
     implementation libs.toaster
     implementation libs.xxpermissions
+    debugImplementation libs.uinspector
 
 }

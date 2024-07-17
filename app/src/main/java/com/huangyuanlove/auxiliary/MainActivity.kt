@@ -41,7 +41,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        binding.setting.setOnClickListener{
+            startActivity(Intent(this@MainActivity,SettingActivity::class.java))
+        }
         binding.contactRv.layoutManager = GridLayoutManager(this, 2)
         binding.contactRv.addItemDecoration(GridSpacingItemDecoration(2, 45, true))
         contactList.addAll(ObjectBox.sotre.boxFor(Contact::class.java).all)

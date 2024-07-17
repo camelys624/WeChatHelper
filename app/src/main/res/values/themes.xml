@@ -5,10 +5,24 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.Auxiliary" parent="Base.Theme.Auxiliary" >
-        <item name="actionBarSize">48dp</item>
+    <style name="CYActionBar" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="android:displayOptions">showCustom</item>
+        <item name="contentInsetStart">0dp</item>
+        <item name="contentInsetLeft">0dp</item>
+        <item name="contentInsetRight">0dp</item>
+        <item name="contentInsetEnd">0dp</item>
+        <item name="displayOptions">showCustom</item>
+        <item name="actionBarSize">88dp</item>
+        <item name="android:actionBarSize">88dp</item>
 
     </style>
-    <style name="Theme.Auxiliary_NoActionBar" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <style name="Theme.Auxiliary" parent="Base.Theme.Auxiliary" >
+        <item name="android:actionBarStyle">@style/CYActionBar</item>
+        <item name="actionBarStyle">@style/CYActionBar</item>
+
+    </style>
+    <style name="Theme.Auxiliary_NoActionBar" parent="Theme.Material3.DayNight.NoActionBar" >
+    </style>
 
 </resources>
