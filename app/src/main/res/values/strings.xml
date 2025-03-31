@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">auxiliary</string>
+    <string name="phone">Phone</string>
+    <string name="wechat">Wechat</string>
 </resources>

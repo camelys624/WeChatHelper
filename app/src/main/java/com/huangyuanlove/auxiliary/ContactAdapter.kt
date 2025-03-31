@@ -12,6 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.huangyuanlove.auxiliary.bean.Contact
+import com.huangyuanlove.auxiliary.databinding.ItemAvatarBinding
 import com.huangyuanlove.auxiliary.databinding.ItemContactBinding
 
 class ContactAdapter(val data: List<Contact>) :
@@ -21,14 +22,12 @@ class ContactAdapter(val data: List<Contact>) :
     var onItemClick: OnItemClick? = null
 
 
-     class MyViewHolder(val binding: ItemContactBinding) : RecyclerView.ViewHolder(binding.root) {
+     class MyViewHolder(val binding: ItemAvatarBinding) : RecyclerView.ViewHolder(binding.root) {
          
          fun bindData(contact: Contact,onItemClick:OnItemClick?){
              if(contact.last){
-                    binding.name.text = "添加联系人"
                  binding.avatar.setImageResource(R.drawable.baseline_add_24)
              }else{
-                binding.name.text = contact.name
                  Glide.with(binding.avatar).load(contact.avatar)
                      .apply(RequestOptions().transform(CenterCrop(), RoundedCorners(8)))
                      .into(binding.avatar)
@@ -42,7 +41,7 @@ class ContactAdapter(val data: List<Contact>) :
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val binding = ItemContactBinding.inflate(LayoutInflater.from(parent.context))
+        val binding = ItemAvatarBinding.inflate(LayoutInflater.from(parent.context))
 
         return MyViewHolder(binding)
     }

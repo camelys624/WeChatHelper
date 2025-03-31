@@ -2,14 +2,11 @@ package com.huangyuanlove.auxiliary
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -44,8 +41,16 @@ class MainActivity : AppCompatActivity() {
         binding.setting.setOnClickListener{
             startActivity(Intent(this@MainActivity,SettingActivity::class.java))
         }
-        binding.contactRv.layoutManager = GridLayoutManager(this, 2)
-        binding.contactRv.addItemDecoration(GridSpacingItemDecoration(2, 45, true))
+
+        val avatarRecyclerView: RecyclerView = findViewById(R.id.avatarRecyclerView)
+        val spanCount = 2
+        val layoutManager = GridLayoutManager(this, spanCount)
+        avatarRecyclerView.layoutManager = layoutManager
+
+        // 设置间距
+        val spacingInPixels = resources.getDimensionPixelSize(R.dimen.avatar_spacing)
+        avatarRecyclerView.addItemDecoration(GridSpacingItemDecoration(spanCount, spacingInPixels, true))
+
         contactList.addAll(ObjectBox.sotre.boxFor(Contact::class.java).all)
         contactList.add(createLastAddContact())
         contactAdapter = ContactAdapter(contactList)
@@ -76,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.contactRv.adapter = contactAdapter
+        avatarRecyclerView.adapter = contactAdapter
 
         contactAdapter.notifyDataSetChanged()
 
